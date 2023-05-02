@@ -11,7 +11,7 @@ header("Access-Control-Allow-Headers: *");
 
 $jsonUser = json_decode(file_get_contents("php://input"));
 if (!$jsonUser) {
-    exit("SIGNUP_ERROR_API_DIDNT_RECIEVE_ITS_PAYLOAD");
+    exit("SIGNUP_ERROR_API_DID_NOT_RECIEVE_ITS_PAYLOAD");
 }
 $bd = include_once "bd.php";
 
