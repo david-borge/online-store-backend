@@ -18,8 +18,10 @@ $bd = include_once "bd.php";
 try {
 
 
-    // - Contraseña introducida en el formulario de Log In:
+    // - API Payload (email y contraseña introducidos en el formulario de Log In y lastLoginFullDate, que es la fecha actual)
+    $emailFromLogInForm = $jsonAPIPayload->email;
     $passwordFromLogInForm = $jsonAPIPayload->password;
+    $lastLoginFullDate = $jsonAPIPayload->lastLoginFullDate;
 
     // Comprobación
     // echo json_encode($passwordFromLogInForm);
@@ -44,10 +46,24 @@ try {
 
         // Compruebo si la contraseña del formulario de Log In coincide con la de la Base de Datos
         if ( $passwordFromLogInForm == $passwordFromDataBase) {
-            
-            echo json_encode([
-                "resultado" => true,
-            ]);
+
+            // Actualizo en la Base de Datos el lastLoginFullDate del email $emailFromLogInForm
+            $sentencia2 = $bd->prepare("UPDATE users SET lastLoginFullDate = ? WHERE email = ?");
+            $resultado2 = $sentencia2->execute([$lastLoginFullDate, $emailFromLogInForm]);
+
+            if ( $resultado2 ) {
+
+                echo json_encode([
+                    "resultado" => $resultado2,
+                ]);
+
+            } else {
+
+                echo json_encode([
+                    "resultado" => 'LOGIN_ERROR_LASTLOGINFULLDATE_UPDATE_FAILED',
+                ]);
+                
+            }
             
         } else {
             
@@ -68,7 +84,7 @@ try {
 
     }
 
-    
+
 
 } catch (Exception $e) {
 
