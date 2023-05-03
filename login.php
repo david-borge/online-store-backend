@@ -51,12 +51,35 @@ try {
             $sentencia2 = $bd->prepare("UPDATE users SET lastLoginFullDate = ? WHERE email = ?");
             $resultado2 = $sentencia2->execute([$lastLoginFullDate, $emailFromLogInForm]);
 
+            // Si la actualización de lastLoginFullDate ha ido bien, recupero los datos del usuario con email $emailFromLogInForm
             if ( $resultado2 ) {
 
-                echo json_encode([
-                    "resultado" => $resultado2,
-                ]);
+                // Los datos del usuario a recuperar y devolver son: firstName, lastName y active orders
+                $sentencia3 = $bd->prepare("SELECT firstName, lastName FROM users WHERE email = ?");
+                $sentencia3->execute([$emailFromLogInForm]);
+                $resultado3 = $sentencia3->fetchObject();
 
+                // Si recuperar los datos del usuario ha ido bien
+                if ( $resultado3 ) {
+
+                    echo json_encode([
+                        "resultado" => true,
+                        "firstName" => $resultado3->firstName,
+                        "lastName"  => $resultado3->lastName,
+                    ]);
+
+                    // echo json_encode([
+                    //     "resultado" => $resultado3, // Esto ya incluye si es true o false, firstName, lastName
+                    // ]);
+
+                } else {
+
+                    echo json_encode([
+                        "resultado" => 'LOGIN_ERROR_GET_USER_DATA_FAILED',
+                    ]);
+
+                }
+                
             } else {
 
                 echo json_encode([
