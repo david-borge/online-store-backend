@@ -108,13 +108,42 @@ try {
         // - Si estoy haciendo auto log in (con los datos de las cookies authEmail y authToken que recibo aquí como Payload de la API en $emailFromLogInForm y en $token)
         else if ( $token != '' ) {
             
-            // /////
             // Compruebo si el token de la cookie authToken coincide con el token del correo $emailFromLogInForm en la Base de Datos
             if ( $token == $tokenFromDataBase) {
 
-                echo json_encode([
-                    "resultado" => true,
-                ]);
+                ///////////
+
+                // Los datos del usuario a recuperar y devolver son: firstName, lastName y active orders
+                $sentencia3 = $bd->prepare("SELECT firstName, lastName FROM users WHERE email = ?");
+                $sentencia3->execute([$emailFromLogInForm]);
+                $resultado3 = $sentencia3->fetchObject();
+
+                // Si recuperar los datos del usuario ha ido bien
+                if ( $resultado3 ) {
+
+                    echo json_encode([
+                        "resultado" => true,
+                        "firstName" => $resultado3->firstName,
+                        "lastName"  => $resultado3->lastName,
+                    ]);
+
+                    // echo json_encode([
+                    //     "resultado" => $resultado3, // Esto ya incluye si es true o false, firstName, lastName
+                    // ]);
+
+                } else {
+
+                    echo json_encode([
+                        "resultado" => 'LOGIN_ERROR_GET_USER_DATA_FAILED',
+                    ]);
+
+                }
+
+                // echo json_encode([
+                //     "resultado" => true,
+                // ]);
+
+                ///////////
                 
             } else {
                 
@@ -123,7 +152,6 @@ try {
                 ]);
 
             }
-            // /////
             
         }
 
