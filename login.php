@@ -11,7 +11,7 @@ header("Access-Control-Allow-Headers: *");
 
 $jsonAPIPayload = json_decode(file_get_contents("php://input"));
 if (!$jsonAPIPayload) {
-    exit("LOGIN_ERROR_API_DIDNT_RECIEVE_ITS_PAYLOAD");
+    exit("LOGIN_ERROR_API_DID_NOT_RECIEVE_ITS_PAYLOAD");
 }
 $bd = include_once "bd.php";
 
@@ -29,70 +29,108 @@ try {
 
 
 
-    // - Obtener de la Base de Datos la contraseña del usuario con el email introducido en el formulario de Log In
-    $sentencia = $bd->prepare("select password from users where email = ?"); // SELECT `password` FROM `users` WHERE `email`='david.borge.olmedo@gmail.com'
+    // Obtener de la Base de Datos la contraseña y el token del usuario con el email introducido en el formulario de Log In
+    $sentencia = $bd->prepare("select password, token from users where email = ?"); // SELECT `password` FROM `users` WHERE `email`='david.borge.olmedo@gmail.com'
     $sentencia->execute([$jsonAPIPayload->email]);
     $resultado = $sentencia->fetchObject();
 
     // Si el email introducido en el formulario de Log In existe en la Base de Datos, guardar su contraseña en una variable y compruebo si coincide con la de la Base de Datos
     if( $resultado == true ) {
 
-        // Guardar en una variable la contraseña del usuario sacada de la Base de Datos
+        // Guardar en una variable la contraseña y el token del usuario sacada de la Base de Datos
         $passwordFromDataBase = $resultado->password;
+        $tokenFromDataBase    = $resultado->token;
         
         // Comprobación
         /* echo json_encode([
             "resultado" => $passwordFromDataBase,
         ]); */
 
-        // Compruebo si la contraseña del formulario de Log In coincide con la de la Base de Datos
-        if ( $passwordFromLogInForm == $passwordFromDataBase) {
+        // Compruebo si estoy iniciando sesión desde el formulario ($passwordFromLogInForm != '') o estoy haciendo auto log in (con los datos de las cookies authEmail y authToken que recibo aquí como Payload de la API en $emailFromLogInForm y en $token)
 
-            // Actualizo en la Base de Datos el lastLoginFullDate y el token (que cambia cada vez que se inicia sesión) del email $emailFromLogInForm
-            $sentencia2 = $bd->prepare("UPDATE users SET lastLoginFullDate = ?, token = ? WHERE email = ?");
-            $resultado2 = $sentencia2->execute([$lastLoginFullDate, $token, $emailFromLogInForm]);
+        // - Si estoy iniciando sesión desde el formulario
+        if ( $passwordFromLogInForm != '' ) {
+            
+            // Compruebo si la contraseña del formulario de Log In coincide con la de la Base de Datos
+            if ( $passwordFromLogInForm == $passwordFromDataBase) {
 
-            // Si la actualización de lastLoginFullDate y del token (que cambia cada vez que se inicia sesión) ha ido bien, recupero los datos del usuario con email $emailFromLogInForm
-            if ( $resultado2 ) {
+                // Actualizo en la Base de Datos el lastLoginFullDate y el token (que cambia cada vez que se inicia sesión) del email $emailFromLogInForm
+                $sentencia2 = $bd->prepare("UPDATE users SET lastLoginFullDate = ?, token = ? WHERE email = ?");
+                $resultado2 = $sentencia2->execute([$lastLoginFullDate, $token, $emailFromLogInForm]);
 
-                // Los datos del usuario a recuperar y devolver son: firstName, lastName y active orders
-                $sentencia3 = $bd->prepare("SELECT firstName, lastName FROM users WHERE email = ?");
-                $sentencia3->execute([$emailFromLogInForm]);
-                $resultado3 = $sentencia3->fetchObject();
+                // Si la actualización de lastLoginFullDate y del token (que cambia cada vez que se inicia sesión) ha ido bien, recupero los datos del usuario con email $emailFromLogInForm
+                if ( $resultado2 ) {
 
-                // Si recuperar los datos del usuario ha ido bien
-                if ( $resultado3 ) {
+                    // Los datos del usuario a recuperar y devolver son: firstName, lastName y active orders
+                    $sentencia3 = $bd->prepare("SELECT firstName, lastName FROM users WHERE email = ?");
+                    $sentencia3->execute([$emailFromLogInForm]);
+                    $resultado3 = $sentencia3->fetchObject();
 
-                    echo json_encode([
-                        "resultado" => true,
-                        "firstName" => $resultado3->firstName,
-                        "lastName"  => $resultado3->lastName,
-                    ]);
+                    // Si recuperar los datos del usuario ha ido bien
+                    if ( $resultado3 ) {
 
-                    // echo json_encode([
-                    //     "resultado" => $resultado3, // Esto ya incluye si es true o false, firstName, lastName
-                    // ]);
+                        echo json_encode([
+                            "resultado" => true,
+                            "firstName" => $resultado3->firstName,
+                            "lastName"  => $resultado3->lastName,
+                        ]);
 
+                        // echo json_encode([
+                        //     "resultado" => $resultado3, // Esto ya incluye si es true o false, firstName, lastName
+                        // ]);
+
+                    } else {
+
+                        echo json_encode([
+                            "resultado" => 'LOGIN_ERROR_GET_USER_DATA_FAILED',
+                        ]);
+
+                    }
+                    
                 } else {
 
                     echo json_encode([
-                        "resultado" => 'LOGIN_ERROR_GET_USER_DATA_FAILED',
+                        "resultado" => 'LOGIN_ERROR_LASTLOGINFULLDATE_UPDATE_FAILED',
                     ]);
-
+                    
                 }
                 
             } else {
+                
+                echo json_encode([
+                    "resultado" => 'LOGIN_ERROR_PASSWORD_IS_NOT_CORRECT',
+                ]);
+
+            }
+
+        }
+        
+        // - Si estoy haciendo auto log in (con los datos de las cookies authEmail y authToken que recibo aquí como Payload de la API en $emailFromLogInForm y en $token)
+        else if ( $token != '' ) {
+            
+            // /////
+            // Compruebo si el token de la cookie authToken coincide con el token del correo $emailFromLogInForm en la Base de Datos
+            if ( $token == $tokenFromDataBase) {
 
                 echo json_encode([
-                    "resultado" => 'LOGIN_ERROR_LASTLOGINFULLDATE_UPDATE_FAILED',
+                    "resultado" => true,
                 ]);
                 
+            } else {
+                
+                echo json_encode([
+                    "resultado" => 'LOGIN_ERROR_TOKEN_IS_NOT_CORRECT',
+                ]);
+
             }
+            // /////
             
-        } else {
-            
+        }
+
+        else {
+
             echo json_encode([
-                "resultado" => 'LOGIN_ERROR_PASSWORD_IS_NOT_CORRECT',
+                "resultado" => 'LOGIN_ERROR_API_DID_NOT_RECIEVE_THE_EMAIL_OR_THE_TOKEN_IN_THE_PAYLOAD',
             ]);
 
         }
