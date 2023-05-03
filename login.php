@@ -18,10 +18,11 @@ $bd = include_once "bd.php";
 try {
 
 
-    // - API Payload (email y contraseña introducidos en el formulario de Log In y lastLoginFullDate, que es la fecha actual)
+    // - API Payload (email y contraseña introducidos en el formulario de Log In, lastLoginFullDate y el token (que cambia cada vez que se inicia sesión), que es la fecha actual)
     $emailFromLogInForm = $jsonAPIPayload->email;
     $passwordFromLogInForm = $jsonAPIPayload->password;
     $lastLoginFullDate = $jsonAPIPayload->lastLoginFullDate;
+    $token = $jsonAPIPayload->token;
 
     // Comprobación
     // echo json_encode($passwordFromLogInForm);
@@ -47,11 +48,11 @@ try {
         // Compruebo si la contraseña del formulario de Log In coincide con la de la Base de Datos
         if ( $passwordFromLogInForm == $passwordFromDataBase) {
 
-            // Actualizo en la Base de Datos el lastLoginFullDate del email $emailFromLogInForm
-            $sentencia2 = $bd->prepare("UPDATE users SET lastLoginFullDate = ? WHERE email = ?");
-            $resultado2 = $sentencia2->execute([$lastLoginFullDate, $emailFromLogInForm]);
+            // Actualizo en la Base de Datos el lastLoginFullDate y el token (que cambia cada vez que se inicia sesión) del email $emailFromLogInForm
+            $sentencia2 = $bd->prepare("UPDATE users SET lastLoginFullDate = ?, token = ? WHERE email = ?");
+            $resultado2 = $sentencia2->execute([$lastLoginFullDate, $token, $emailFromLogInForm]);
 
-            // Si la actualización de lastLoginFullDate ha ido bien, recupero los datos del usuario con email $emailFromLogInForm
+            // Si la actualización de lastLoginFullDate y del token (que cambia cada vez que se inicia sesión) ha ido bien, recupero los datos del usuario con email $emailFromLogInForm
             if ( $resultado2 ) {
 
                 // Los datos del usuario a recuperar y devolver son: firstName, lastName y active orders
