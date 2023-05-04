@@ -61,31 +61,8 @@ try {
                 // Si la actualización de lastLoginFullDate y del token (que cambia cada vez que se inicia sesión) ha ido bien, recupero los datos del usuario con email $emailFromLogInForm
                 if ( $resultado2 ) {
 
-                    // Los datos del usuario a recuperar y devolver son: firstName, lastName y active orders
-                    $sentencia3 = $bd->prepare("SELECT firstName, lastName FROM users WHERE email = ?");
-                    $sentencia3->execute([$emailFromLogInForm]);
-                    $resultado3 = $sentencia3->fetchObject();
-
-                    // Si recuperar los datos del usuario ha ido bien
-                    if ( $resultado3 ) {
-
-                        echo json_encode([
-                            "resultado" => true,
-                            "firstName" => $resultado3->firstName,
-                            "lastName"  => $resultado3->lastName,
-                        ]);
-
-                        // echo json_encode([
-                        //     "resultado" => $resultado3, // Esto ya incluye si es true o false, firstName, lastName
-                        // ]);
-
-                    } else {
-
-                        echo json_encode([
-                            "resultado" => 'LOGIN_ERROR_GET_USER_DATA_FAILED',
-                        ]);
-
-                    }
+                    // Los datos del usuario a recuperar y devolver son: firstName, lastName y orders
+                    getUserData($bd, $emailFromLogInForm);
                     
                 } else {
 
@@ -111,39 +88,8 @@ try {
             // Compruebo si el token de la cookie authToken coincide con el token del correo $emailFromLogInForm en la Base de Datos
             if ( $token == $tokenFromDataBase) {
 
-                ///////////
-
-                // Los datos del usuario a recuperar y devolver son: firstName, lastName y active orders
-                $sentencia3 = $bd->prepare("SELECT firstName, lastName FROM users WHERE email = ?");
-                $sentencia3->execute([$emailFromLogInForm]);
-                $resultado3 = $sentencia3->fetchObject();
-
-                // Si recuperar los datos del usuario ha ido bien
-                if ( $resultado3 ) {
-
-                    echo json_encode([
-                        "resultado" => true,
-                        "firstName" => $resultado3->firstName,
-                        "lastName"  => $resultado3->lastName,
-                    ]);
-
-                    // echo json_encode([
-                    //     "resultado" => $resultado3, // Esto ya incluye si es true o false, firstName, lastName
-                    // ]);
-
-                } else {
-
-                    echo json_encode([
-                        "resultado" => 'LOGIN_ERROR_GET_USER_DATA_FAILED',
-                    ]);
-
-                }
-
-                // echo json_encode([
-                //     "resultado" => true,
-                // ]);
-
-                ///////////
+                // Los datos del usuario a recuperar y devolver son: firstName, lastName y orders
+                getUserData($bd, $emailFromLogInForm);
                 
             } else {
                 
@@ -184,5 +130,42 @@ try {
     echo json_encode([
         "resultado" => $e->getMessage(), // Ejemplo: "SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'hewemim@mailinator.com' for key 'users.email'"
     ]);
+
+}
+
+
+
+// Los datos del usuario a recuperar y devolver son: firstName, lastName y orders
+function getUserData($bd, $emailFromLogInForm) {
+
+    $sentencia3 = $bd->prepare("SELECT id, firstName, lastName FROM users WHERE email = ?");
+    $sentencia3->execute([$emailFromLogInForm]);
+    $resultado3 = $sentencia3->fetchObject();
+
+    $sentencia4 = $bd->prepare("SELECT * FROM orders WHERE userId = ?");
+    $sentencia4->execute([$resultado3->id]);
+    $resultado4 = $sentencia4->fetchObject();
+
+    // Si recuperar los datos del usuario ha ido bien
+    if ( $resultado3 && $resultado4 ) {
+
+        echo json_encode([
+            "resultado" => true,
+            "firstName" => $resultado3->firstName,
+            "lastName"  => $resultado3->lastName,
+            "orders"    => $resultado4,
+        ]);
+
+        // echo json_encode([
+        //     "resultado" => $resultado3, // Esto ya incluye si es true o false, firstName, lastName
+        // ]);
+
+    } else {
+
+        echo json_encode([
+            "resultado" => 'LOGIN_ERROR_GET_USER_DATA_FAILED',
+        ]);
+
+    }
 
 }
