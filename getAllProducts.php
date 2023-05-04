@@ -8,6 +8,6 @@ if ($http_origin == "http://localhost:4200" || $http_origin == "http://localhost
 }
 
 $bd = include_once "bd.php";
-$sentencia = $bd->query("select * from products");
+$sentencia = $bd->query("SELECT * FROM products");
 $products = $sentencia->fetchAll(PDO::FETCH_OBJ);
 echo json_encode($products);

@@ -30,7 +30,7 @@ try {
 
 
     // Obtener de la Base de Datos la contraseña y el token del usuario con el email introducido en el formulario de Log In
-    $sentencia = $bd->prepare("select password, token from users where email = ?"); // SELECT `password` FROM `users` WHERE `email`='david.borge.olmedo@gmail.com'
+    $sentencia = $bd->prepare("SELECT password, token FROM users WHERE email = ?"); // SELECT `password` FROM `users` WHERE `email`='david.borge.olmedo@gmail.com'
     $sentencia->execute([$jsonAPIPayload->email]);
     $resultado = $sentencia->fetchObject();
 

@@ -17,7 +17,7 @@ $bd = include_once "bd.php";
 
 try {
 
-    $sentencia = $bd->prepare("insert into users(firstName, lastName, email, password, signUpFullDate, lastLoginFullDate, token) values (?,?,?,?,?,?,?)");
+    $sentencia = $bd->prepare("INSERT INTO users(firstName, lastName, email, password, signUpFullDate, lastLoginFullDate, token) VALUES (?,?,?,?,?,?,?)");
     $resultado = $sentencia->execute([$jsonUser->firstName, $jsonUser->lastName, $jsonUser->email, $jsonUser->password, $jsonUser->signUpFullDate, $jsonUser->lastLoginFullDate, $jsonUser->token]);
     echo json_encode([
         "resultado" => $resultado,
