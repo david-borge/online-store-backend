@@ -135,19 +135,21 @@ try {
 
 
 
-// Los datos del usuario a recuperar y devolver son: firstName, lastName y orders
+// Los datos del usuario a recuperar y devolver son: firstName, lastName y los necesarios para Active Orders
 function getUserData($bd, $emailFromLogInForm) {
 
+    // Recuperar: firstName, lastName
     $sentencia3 = $bd->prepare("SELECT id, firstName, lastName FROM users WHERE email = ?");
     $sentencia3->execute([$emailFromLogInForm]);
     $resultado3 = $sentencia3->fetchObject();
 
-    $sentencia4 = $bd->prepare("SELECT * FROM orders WHERE userId = ?");
+    // Recuperar: datos necesarios para Active Orders (imageThumbnail, price, productQuantity)
+    $sentencia4 = $bd->prepare("SELECT orders.id, products.imageThumbnail, SUM(products.price * orderProducts.productQuantity) AS orderTotal, orders.deliveryFullDate FROM orders, orderProducts, products WHERE orders.id = orderId AND products.id = productId AND userId = ? AND orders.active = 1 GROUP BY orders.id");
     $sentencia4->execute([$resultado3->id]);
-    $resultado4 = $sentencia4->fetchObject();
+    $resultado4 = $sentencia4->fetchAll(PDO::FETCH_OBJ);
 
     // Si recuperar los datos del usuario ha ido bien
-    if ( $resultado3 && $resultado4 ) {
+    if ( $resultado3 ) {
 
         echo json_encode([
             "resultado" => true,
@@ -156,9 +158,7 @@ function getUserData($bd, $emailFromLogInForm) {
             "orders"    => $resultado4,
         ]);
 
-        // echo json_encode([
-        //     "resultado" => $resultado3, // Esto ya incluye si es true o false, firstName, lastName
-        // ]);
+        // Nota $resultado4 es false si no hay ninguna Active Order
 
     } else {
 
