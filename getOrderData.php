@@ -34,7 +34,7 @@ try {
     $sentenciaOrderAddress->execute([$orderNumberAPIPayload]);
     $resultadoOrderAddress = $sentenciaOrderAddress->fetchObject();
 
-    $sentenciaOrderPaymentMethod = $bd->prepare("SELECT paymentMethods.type, paymentMethods.cardBankName, paymentMethods.cardPersonFullName, RIGHT(paymentMethods.cardNumber, 4) AS cardLastFourNumbers, paymentMethods.cardExpiringMonth, paymentMethods.cardExpiringYear, paymentMethods.cardType FROM paymentMethods, orders WHERE orders.id = ? AND paymentMethods.id = orders.paymentMethodId");
+    $sentenciaOrderPaymentMethod = $bd->prepare("SELECT paymentMethods.type, paymentMethods.cardBankName, paymentMethods.cardPersonFullName, RIGHT(paymentMethods.cardNumber, 4) AS cardLastFourNumbers, paymentMethods.cardExpirationMonth, paymentMethods.cardExpirationYear, paymentMethods.cardType FROM paymentMethods, orders WHERE orders.id = ? AND paymentMethods.id = orders.paymentMethodId");
     $sentenciaOrderPaymentMethod->execute([$orderNumberAPIPayload]);
     $resultadoOrderPaymentMethod = $sentenciaOrderPaymentMethod->fetchObject();
 
