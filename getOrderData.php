@@ -22,19 +22,32 @@ try {
     $orderNumberAPIPayload = $jsonAPIPayload->orderNumber;
 
     // Recuperar los datos de la Order
-    $sentencia = $bd->prepare("SELECT * FROM orders WHERE id = ?");
-    $sentencia->execute([$orderNumberAPIPayload]);
-    $resultado = $sentencia->fetchObject();
+    $sentenciaOrderData = $bd->prepare("SELECT orders.orderFullDate, orders.deliveryFullDate, SUM(products.price * orderProducts.productQuantity) AS orderTotal FROM orders, orderProducts, products WHERE products.id = orderProducts.productId AND orders.id = ? AND orderProducts.orderId = ?");
+    $sentenciaOrderData->execute([$orderNumberAPIPayload, $orderNumberAPIPayload]);
+    $resultadoOrderData = $sentenciaOrderData->fetchObject();
+
+    $sentenciaOrderProducts = $bd->prepare("SELECT products.imageThumbnail, products.name, products.price, orderProducts.productQuantity FROM products, orderProducts WHERE products.id = orderProducts.productId AND orderProducts.orderId = ?");
+    $sentenciaOrderProducts->execute([$orderNumberAPIPayload]);
+    $resultadoOrderProducts = $sentenciaOrderProducts->fetchAll(PDO::FETCH_OBJ);
+
+    $sentenciaOrderAddress = $bd->prepare("SELECT addresses.fullName, addresses.address, addresses.postalCode, addresses.city, countries.name AS country FROM addresses, orders, countries WHERE orders.id = ? AND addresses.id = orders.addressId AND countries.id = addresses.countryId GROUP BY fullName");
+    $sentenciaOrderAddress->execute([$orderNumberAPIPayload]);
+    $resultadoOrderAddress = $sentenciaOrderAddress->fetchObject();
+
+    $sentenciaOrderPaymentMethod = $bd->prepare("SELECT paymentMethods.type, paymentMethods.cardBankName, paymentMethods.cardPersonFullName, RIGHT(paymentMethods.cardNumber, 4) AS cardLastFourNumbers, paymentMethods.cardExpiringMonth, paymentMethods.cardExpiringYear, paymentMethods.cardType FROM paymentMethods, orders WHERE orders.id = ? AND paymentMethods.id = orders.paymentMethodId");
+    $sentenciaOrderPaymentMethod->execute([$orderNumberAPIPayload]);
+    $resultadoOrderPaymentMethod = $sentenciaOrderPaymentMethod->fetchObject();
 
     // Si recuperar los datos del usuario ha ido bien
-    if ( $resultado ) {
+    if ( $resultadoOrderData && $resultadoOrderProducts && $resultadoOrderAddress && $resultadoOrderPaymentMethod ) {
 
         echo json_encode([
-            "resultado" => true,
-            "orderData" => $resultado,
+            "resultado"          => true,
+            "orderData"          => $resultadoOrderData,
+            "orderProducts"      => $resultadoOrderProducts,
+            "orderAddress"       => $resultadoOrderAddress,
+            "orderPaymentMethod" => $resultadoOrderPaymentMethod,
         ]);
-
-        // Nota $resultado4 es false si no hay ninguna Active Order
 
     } else {
 
