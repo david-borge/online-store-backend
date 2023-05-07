@@ -11,7 +11,7 @@ header("Access-Control-Allow-Headers: *");
 
 $jsonAPIPayload = json_decode(file_get_contents("php://input"));
 if (!$jsonAPIPayload) {
-    exit("GET_ORDERS_DATA_ERROR_API_DID_NOT_RECIEVE_ITS_PAYLOAD");
+    exit("GET_ADDRESSES_DATA_ERROR_API_DID_NOT_RECIEVE_ITS_PAYLOAD");
 }
 $bd = include_once "bd.php";
 
@@ -21,8 +21,8 @@ try {
     // - API Payload (email introducido en el formulario de Log In)
     $emailFromLogInForm = $jsonAPIPayload->email;
 
-    // Recuperar: datos necesarios para Active Orders (imageThumbnail, orderTotal, deliveryFullDate)
-    $sentencia = $bd->prepare("SELECT orders.id, products.imageThumbnail, SUM(products.price * orderProducts.productQuantity) AS orderTotal, orders.deliveryFullDate, orders.active FROM orders, orderProducts, products, users WHERE orders.id = orderId AND products.id = productId AND users.email = ? GROUP BY orders.id");
+    // Recuperar: direcciones del usuario con email $emailFromLogInForm
+    $sentencia = $bd->prepare("SELECT addresses.fullName, addresses.address, addresses.postalCode, addresses.city, countries.name AS country FROM addresses, countries, users WHERE users.email = ? AND countries.id = addresses.countryId");
     $sentencia->execute([$emailFromLogInForm]);
     $resultado = $sentencia->fetchAll(PDO::FETCH_OBJ);
 
@@ -31,13 +31,13 @@ try {
 
         echo json_encode([
             "resultado" => true,
-            "orders"    => $resultado,
+            "addresses" => $resultado,
         ]);
 
     } else {
 
         echo json_encode([
-            "resultado" => 'GET_ORDERS_DATA_ERROR_GET_ORDERS_FAILED',
+            "resultado" => 'GET_ADDRESSES_DATA_ERROR_GET_ADDRESSES_FAILED',
         ]);
 
     }
