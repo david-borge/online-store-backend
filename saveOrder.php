@@ -37,10 +37,22 @@ try {
         $sentencia2 = $bd->prepare("INSERT INTO orders(userId, orderFullDate, deliveryFullDate, addressId, paymentMethodId, active) VALUES (?, ?, ?, ?, ?, ?)");
         $resultado2 = $sentencia2->execute([$userId, $orderFullDateAPIPayload, $deliveryFullDateAPIPayload, $addressIdAPIPayload, $paymentMethodIdAPIPayload, 1]); // 1: todas las Orders nuevas empiezan como activas (no entregadas todavía)
         
-        // Si el añadir la nueva Order ha ido bien
+        // Si el añadir la nueva Order ha ido bien, delete products from cart when Order is saved
         if ($resultado2) {
 
-            echo json_encode($resultado2);
+            // Delete products from cart when Order is saved
+            $sentencia3 = $bd->prepare("DELETE FROM cart WHERE cart.userId = ?");
+            $resultado3 = $sentencia3->execute([$userId]);
+            
+            if ($resultado3) {
+
+                echo json_encode($resultado3);
+    
+            } else {
+                echo json_encode([
+                    "resultado" => 'SAVE_ORDER_COULD_NOT_DELETE_CART_PRODUCTS',
+                ]);
+            }
 
         } else {
             echo json_encode([
