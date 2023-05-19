@@ -30,7 +30,7 @@ try {
     $sentenciaOrderProducts->execute([$orderNumberAPIPayload]);
     $resultadoOrderProducts = $sentenciaOrderProducts->fetchAll(PDO::FETCH_OBJ);
 
-    $sentenciaOrderAddress = $bd->prepare("SELECT addresses.fullName, addresses.address, addresses.postalCode, addresses.city, countries.name AS country FROM addresses, orders, countries WHERE orders.id = ? AND addresses.id = orders.addressId AND countries.id = addresses.countryId GROUP BY fullName");
+    $sentenciaOrderAddress = $bd->prepare("SELECT addresses.id, addresses.fullName, addresses.address, addresses.postalCode, addresses.city, countries.name AS country FROM addresses, orders, countries WHERE orders.id = ? AND addresses.id = orders.addressId AND countries.id = addresses.countryId GROUP BY fullName");
     $sentenciaOrderAddress->execute([$orderNumberAPIPayload]);
     $resultadoOrderAddress = $sentenciaOrderAddress->fetchObject();
 
