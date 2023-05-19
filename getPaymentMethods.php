@@ -22,7 +22,7 @@ try {
     $emailFromLogInForm = $jsonAPIPayload->email;
 
     // Recuperar: direcciones del usuario con email $emailFromLogInForm
-    $sentencia = $bd->prepare("SELECT paymentMethods.type, paymentMethods.cardBankName, paymentMethods.cardPersonFullName, RIGHT(paymentMethods.cardNumber, 4) AS cardLastFourNumbers, paymentMethods.cardExpirationMonth, paymentMethods.cardExpirationYear, paymentMethods.cardType, paymentMethods.isDefault FROM paymentMethods, users WHERE users.email = ?");
+    $sentencia = $bd->prepare("SELECT paymentMethods.id, paymentMethods.type, paymentMethods.cardBankName, paymentMethods.cardPersonFullName, RIGHT(paymentMethods.cardNumber, 4) AS cardLastFourNumbers, paymentMethods.cardExpirationMonth, paymentMethods.cardExpirationYear, paymentMethods.cardType, paymentMethods.isDefault FROM paymentMethods, users WHERE users.email = ?");
     $sentencia->execute([$emailFromLogInForm]);
     $resultado = $sentencia->fetchAll(PDO::FETCH_OBJ);
 
