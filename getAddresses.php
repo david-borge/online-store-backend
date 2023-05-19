@@ -22,7 +22,7 @@ try {
     $emailFromLogInForm = $jsonAPIPayload->email;
 
     // Recuperar: direcciones del usuario con email $emailFromLogInForm
-    $sentencia = $bd->prepare("SELECT addresses.fullName, addresses.address, addresses.postalCode, addresses.city, countries.name AS country FROM addresses, countries, users WHERE users.email = ? AND countries.id = addresses.countryId");
+    $sentencia = $bd->prepare("SELECT addresses.id, addresses.fullName, addresses.address, addresses.postalCode, addresses.city, countries.name AS country, addresses.isDefault FROM addresses, countries, users WHERE users.email = ? AND countries.id = addresses.countryId");
     $sentencia->execute([$emailFromLogInForm]);
     $resultado = $sentencia->fetchAll(PDO::FETCH_OBJ);
 
