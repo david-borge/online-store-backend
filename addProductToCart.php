@@ -33,22 +33,55 @@ try {
 
     // Si recuperar el userId ha ido bien
     if ( $resultado && $resultado2 ) {
+        
         $userId    = $resultado->id;
         $productId = $resultado2->id;
 
-        // Añadir el producto al carrito
-        $sentencia3 = $bd->prepare("INSERT INTO cart(userId, productId, productQuantity) VALUES (?, ?, 1)"); // Por ahora, cuando añado un producto al carrito siempre es una unidad
+        // Comprobar si el usuario con $userId ya ha añadido el producto con $productId al carrito
+        $sentencia3 = $bd->prepare("SELECT cart.productQuantity FROM cart WHERE cart.userId = ? AND cart.productId = ?");
         $resultado3 = $sentencia3->execute([$userId, $productId]);
+        $resultado3 = $sentencia3->fetchObject();
+
+        // Si el usuario NO había añadido el producto al carrito, añadir el producto al carrito
+        if (!$resultado3) { // $resultado3 no existe (es null)
+            
+            $sentencia4 = $bd->prepare("INSERT INTO cart(userId, productId, productQuantity) VALUES (?, ?, 1)"); // Por ahora, cuando añado un producto al carrito siempre es una unidad
+            $resultado4 = $sentencia4->execute([$userId, $productId]);
+
+            // Si el añadir el producto al carrito ha ido bien
+            if ($resultado4) {
+
+                echo json_encode($resultado4);
+
+            } else {
+
+                echo json_encode([
+                    "resultado" => 'ADD_PRODUCT_TO_CART_ERROR_COULD_NOT_ADD_PRODUCT_TO_CART',
+                ]);
+                
+            }
+            
+        }
         
-        // Si el añadir la nueva address ha ido bien
-        if ($resultado3) {
+        // Si el usuario SÍ había añadido el producto al carrito, aumentar su cantidad en 1
+        else {
 
-            echo json_encode($resultado3);
+            $sentencia4 = $bd->prepare("UPDATE cart SET productQuantity = (? + 1) WHERE cart.userId = ? AND cart.productId = ?");
+            $resultado4 = $sentencia4->execute([$resultado3->productQuantity, $userId, $productId]);
+            
+            // Si el aumentar la cantidad del producto en 1 ha ido bien
+            if ($resultado4) {
 
-        } else {
-            echo json_encode([
-                "resultado" => 'ADD_PRODUCT_TO_CART_ERROR_COULD_NOT_ADD_PRODUCT_TO_CART',
-            ]);
+                echo json_encode($resultado4);
+
+            } else {
+
+                echo json_encode([
+                    "resultado" => 'ADD_PRODUCT_TO_CART_ERROR_COULD_NOT_UPDATE_PRODUCT_QUANTITY',
+                ]);
+                
+            }
+
         }
         
     } else {
