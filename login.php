@@ -143,8 +143,8 @@ function getUserData($bd, $emailFromLogInForm) {
     $sentencia3->execute([$emailFromLogInForm]);
     $resultado3 = $sentencia3->fetchObject();
 
-    // Recuperar: datos necesarios para Active Orders (order id, imageThumbnail, orderTotal, deliveryFullDate)
-    $sentencia4 = $bd->prepare("SELECT orders.id, products.imageThumbnail, SUM(products.price * orderProducts.productQuantity) AS orderTotal, orders.deliveryFullDate FROM orders, orderProducts, products WHERE orders.id = orderProducts.orderId AND products.id = orderProducts.productId AND orders.userId = ? AND orders.active = 1 GROUP BY orders.id");
+    // Recuperar: datos necesarios para Active Orders (order id, imageThumbnail, imageWidth, imageHeight, orderTotal, deliveryFullDate)
+    $sentencia4 = $bd->prepare("SELECT orders.id, products.imageThumbnail, products.imageWidth, products.imageHeight, SUM(products.price * orderProducts.productQuantity) AS orderTotal, orders.deliveryFullDate FROM orders, orderProducts, products WHERE orders.id = orderProducts.orderId AND products.id = orderProducts.productId AND orders.userId = ? AND orders.active = 1 GROUP BY orders.id");
     $sentencia4->execute([$resultado3->id]);
     $resultado4 = $sentencia4->fetchAll(PDO::FETCH_OBJ);
 
