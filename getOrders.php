@@ -22,7 +22,7 @@ try {
     $emailFromLogInForm = $jsonAPIPayload->email;
 
     // Recuperar: datos necesarios para Active Orders (imageThumbnail, orderTotal, deliveryFullDate)
-    $sentencia = $bd->prepare("SELECT orders.id, products.imageThumbnail, SUM(products.price * orderProducts.productQuantity) AS orderTotal, orders.deliveryFullDate, orders.active FROM orders, orderProducts, products, users WHERE orders.id = orderId AND products.id = productId AND users.email = ? GROUP BY orders.id");
+    $sentencia = $bd->prepare("SELECT orders.id, products.imageThumbnail, products.imageWidth, products.imageHeight, SUM(products.price * orderProducts.productQuantity) AS orderTotal, orders.deliveryFullDate, orders.active FROM orders, orderProducts, products, users WHERE orders.id = orderId AND products.id = productId AND users.email = ? GROUP BY orders.id");
     $sentencia->execute([$emailFromLogInForm]);
     $resultado = $sentencia->fetchAll(PDO::FETCH_OBJ);
 
