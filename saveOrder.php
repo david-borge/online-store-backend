@@ -19,11 +19,12 @@ $bd = include_once "bd.php";
 try {
 
     // - API Payload
-    $authTokenAPIPayload        = $jsonAPIPayload->authToken;
-    $orderFullDateAPIPayload    = $jsonAPIPayload->orderFullDate;
-    $deliveryFullDateAPIPayload = $jsonAPIPayload->deliveryFullDate;
-    $addressIdAPIPayload        = $jsonAPIPayload->addressId;
-    $paymentMethodIdAPIPayload  = $jsonAPIPayload->paymentMethodId;
+    $authTokenAPIPayload          = $jsonAPIPayload->authToken;
+    $orderFullDateAPIPayload      = $jsonAPIPayload->orderFullDate;
+    $deliveryFullDateAPIPayload   = $jsonAPIPayload->deliveryFullDate;
+    $addressIdAPIPayload          = $jsonAPIPayload->addressId;
+    $paymentMethodIdAPIPayload    = $jsonAPIPayload->paymentMethodId;
+    $orderProductsDataAPIPayload  = $jsonAPIPayload->orderProductsData;
     
     // Sacar de la Base de Datos el userId correspondiente al authToken
     $sentencia = $bd->prepare("SELECT id FROM users WHERE token = ?");
@@ -37,17 +38,36 @@ try {
         // Guardar la nueva Order en la Base de Datos
         $sentencia2 = $bd->prepare("INSERT INTO orders(userId, orderFullDate, deliveryFullDate, addressId, paymentMethodId, active) VALUES (?, ?, ?, ?, ?, ?)");
         $resultado2 = $sentencia2->execute([$userId, $orderFullDateAPIPayload, $deliveryFullDateAPIPayload, $addressIdAPIPayload, $paymentMethodIdAPIPayload, 1]); // 1: todas las Orders nuevas empiezan como activas (no entregadas todavía)
-        
+
+        // Leer el id de la order insertada (el último id insertado en orders)
+        $sentencia3 = $bd->query("SELECT LAST_INSERT_ID()");
+        $orderId = $sentencia3->fetchColumn();
+
+        // Guardar la orderProductsData en la Base de Datos
+        $resultado4IsOK = true;
+        foreach($orderProductsDataAPIPayload as $key => $orderProductData ) {
+
+            $sentencia4 = $bd->prepare("INSERT INTO orderProducts(orderId, productId, productQuantity) VALUES (?, ?, ?)");
+            $resultado4 = $sentencia4->execute([$orderId, $orderProductData->productId, $orderProductData->productQuantity]);
+
+            if (!$resultado4) {
+                $resultado4IsOK = false;
+                break;
+            }
+
+        }
+
         // Si el añadir la nueva Order ha ido bien, delete products from cart when Order is saved
-        if ($resultado2) {
+        if ($resultado2 && $resultado4IsOK) {
+        // if ($resultado2 && $resultado4IsOK) {
 
             // Delete products from cart when Order is saved
-            $sentencia3 = $bd->prepare("DELETE FROM cart WHERE cart.userId = ?");
-            $resultado3 = $sentencia3->execute([$userId]);
+            $sentencia5 = $bd->prepare("DELETE FROM cart WHERE cart.userId = ?");
+            $resultado5 = $sentencia5->execute([$userId]);
             
-            if ($resultado3) {
+            if ($resultado5) {
 
-                echo json_encode($resultado3);
+                echo json_encode($resultado5);
     
             } else {
                 echo json_encode([
