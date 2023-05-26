@@ -20,28 +20,43 @@ $bd = include_once "bd.php";
 try {
 
 
-    // - API Payload (email introducido en el formulario de Log In)
-    $emailFromLogInForm = $jsonAPIPayload->email;
+    // - API Payload (authToken cookie value)
+    $authTokenAPIPayload = $jsonAPIPayload->authToken;
 
-    // Recuperar: datos necesarios para Active Orders (imageThumbnail, orderTotal, deliveryFullDate)
-    $sentencia = $bd->prepare("SELECT orders.id, products.imageThumbnail, products.imageWidth, products.imageHeight, SUM(products.price * orderProducts.productQuantity) AS orderTotal, orders.deliveryFullDate, orders.active FROM orders, orderProducts, products, users WHERE orders.id = orderId AND products.id = productId AND users.email = ? GROUP BY orders.id");
-    $sentencia->execute([$emailFromLogInForm]);
-    $resultado = $sentencia->fetchAll(PDO::FETCH_OBJ);
+    // Sacar de la Base de Datos el userId correspondiente al authToken
+    $sentencia = $bd->prepare("SELECT id FROM users WHERE token = ?");
+    $sentencia->execute([$authTokenAPIPayload]);
+    $resultado = $sentencia->fetchObject();
 
-    // Si recuperar los datos ha ido bien
+    // Si recuperar el userId ha ido bien
     if ( $resultado ) {
+        $userId = $resultado->id;
+        
+        // Recuperar: datos necesarios para Active Orders (imageThumbnail, orderTotal, deliveryFullDate)
+        $sentencia = $bd->prepare("SELECT orders.id, products.imageThumbnail, products.imageWidth, products.imageHeight, SUM(products.price * orderProducts.productQuantity) AS orderTotal, orders.deliveryFullDate, orders.active FROM orders, orderProducts, products, users WHERE orders.id = orderId AND products.id = productId AND orders.userId = ? GROUP BY orders.id");
+        $sentencia->execute([$userId]);
+        $resultado = $sentencia->fetchAll(PDO::FETCH_OBJ);
 
-        echo json_encode([
-            "resultado" => true,
-            "orders"    => $resultado,
-        ]);
+        // Si se ha encontrado algún pedido
+        if ( $resultado ) {
 
-    } else {
+            echo json_encode([
+                "resultado" => true,
+                "orders"    => $resultado,
+            ]);
 
-        echo json_encode([
-            "resultado" => 'GET_ORDERS_DATA_ERROR_GET_ORDERS_FAILED',
-        ]);
+        }
+        
+        // Si NO se ha encontrado algún pedido, devolver un array vacío (porque el valor por defecto de $resultado es null)
+        else {
 
+            echo json_encode([
+                "resultado" => true,
+                "orders"    => [],
+            ]);
+
+        }
+    
     }
 
 } catch (Exception $e) {
