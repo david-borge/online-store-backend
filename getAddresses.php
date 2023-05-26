@@ -20,25 +20,44 @@ try {
 
 
     // - API Payload (email introducido en el formulario de Log In)
-    $emailFromLogInForm = $jsonAPIPayload->email;
+    $authTokenAPIPayload = $jsonAPIPayload->authToken;
 
-    // Recuperar: direcciones del usuario con email $emailFromLogInForm
-    $sentencia = $bd->prepare("SELECT addresses.id, addresses.fullName, addresses.address, addresses.postalCode, addresses.city, countries.name AS country, addresses.isDefault FROM addresses, countries, users WHERE users.email = ? AND countries.id = addresses.countryId");
-    $sentencia->execute([$emailFromLogInForm]);
-    $resultado = $sentencia->fetchAll(PDO::FETCH_OBJ);
+    // Sacar de la Base de Datos el userId correspondiente al authToken
+    $sentencia = $bd->prepare("SELECT id FROM users WHERE token = ?");
+    $sentencia->execute([$authTokenAPIPayload]);
+    $resultado = $sentencia->fetchObject();
 
-    // Si recuperar los datos ha ido bien
+    // Si recuperar el userId ha ido bien
     if ( $resultado ) {
+        $userId = $resultado->id;
+        
+        // Recuperar: direcciones del usuario $userId
+        $sentencia2 = $bd->prepare("SELECT addresses.id, addresses.fullName, addresses.address, addresses.postalCode, addresses.city, countries.name AS country, addresses.isDefault FROM addresses, countries WHERE addresses.userId = ? AND countries.id = addresses.countryId");
+        $sentencia2->execute([$userId]);
+        $resultado2 = $sentencia2->fetchAll(PDO::FETCH_OBJ);
 
-        echo json_encode([
-            "resultado" => true,
-            "addresses" => $resultado,
-        ]);
+        // Si se ha encontrado alguna address
+        if ( $resultado2 ) {
+
+            echo json_encode([
+                "resultado" => true,
+                "addresses" => $resultado2,
+            ]);
+
+        // Si NO se ha encontrado algún pedido, devolver un array vacío (porque el valor por defecto de $resultado es null)
+        } else {
+
+            echo json_encode([
+                "resultado" => true,
+                "addresses" => [],
+            ]);
+
+        }
 
     } else {
 
         echo json_encode([
-            "resultado" => 'GET_ADDRESSES_DATA_ERROR_GET_ADDRESSES_FAILED',
+            "resultado" => 'GET_ADDRESSES_DATA_ERROR_COULD_NOT_FIND_USER_ID',
         ]);
 
     }
