@@ -33,12 +33,12 @@ try {
         $userId = $resultado->id;
         
         // Recuperar: datos necesarios para Active Orders (imageThumbnail, orderTotal, deliveryFullDate)
-        $sentencia = $bd->prepare("SELECT orders.id, products.imageThumbnail, products.imageWidth, products.imageHeight, SUM(products.price * orderProducts.productQuantity) AS orderTotal, orders.deliveryFullDate, orders.active FROM orders, orderProducts, products WHERE orders.id = orderId AND products.id = productId AND orders.userId = ? GROUP BY orders.id");
-        $sentencia->execute([$userId]);
-        $resultado = $sentencia->fetchAll(PDO::FETCH_OBJ);
+        $sentencia2 = $bd->prepare("SELECT orders.id, products.imageThumbnail, products.imageWidth, products.imageHeight, SUM(products.price * orderProducts.productQuantity) AS orderTotal, orders.deliveryFullDate, orders.active FROM orders, orderProducts, products WHERE orders.id = orderId AND products.id = productId AND orders.userId = ? GROUP BY orders.id");
+        $sentencia2->execute([$userId]);
+        $resultado2 = $sentencia2->fetchAll(PDO::FETCH_OBJ);
 
         // Si se ha encontrado algún pedido
-        if ( $resultado ) {
+        if ( $resultado2 ) {
 
             echo json_encode([
                 "resultado" => true,
