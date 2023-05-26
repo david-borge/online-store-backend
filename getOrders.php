@@ -57,6 +57,12 @@ try {
 
         }
     
+    } else {
+
+        echo json_encode([
+            "resultado" => 'GET_ORDERS_DATA_ERROR_COULD_NOT_FIND_USER_ID',
+        ]);
+
     }
 
 } catch (Exception $e) {
