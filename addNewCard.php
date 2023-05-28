@@ -31,20 +31,26 @@ try {
     if ( $resultado ) {
         $userId = $resultado->id;
 
-        // Guardar la nueva card en la Base de Datos
+        // Guardar la nueva card en la Base de Datos (como default)
         $sentencia2 = $bd->prepare("INSERT INTO paymentMethods(userId, type, cardBankName, cardPersonFullName, cardNumber, cardExpirationMonth, cardExpirationYear, cardType, isDefault) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $resultado2 = $sentencia2->execute([$userId, $newCardAPIPayload->type, $newCardAPIPayload->cardBankName, $newCardAPIPayload->cardPersonFullName, $newCardAPIPayload->cardNumber, $newCardAPIPayload->cardExpirationMonth, $newCardAPIPayload->cardExpirationYear, $newCardAPIPayload->cardType, 0]); // 0: no es isDefault por defecto
+        $resultado2 = $sentencia2->execute([$userId, $newCardAPIPayload->type, $newCardAPIPayload->cardBankName, $newCardAPIPayload->cardPersonFullName, $newCardAPIPayload->cardNumber, $newCardAPIPayload->cardExpirationMonth, $newCardAPIPayload->cardExpirationYear, $newCardAPIPayload->cardType, 1]); // 1: es isDefault por defecto
+        
+        // Leer el id de la card insertada (el último id insertado en paymentMethods)
+        $sentencia3 = $bd->query("SELECT LAST_INSERT_ID()");
+        $newCardId = $sentencia3->fetchColumn();
+
+        // Poner el isDefault a 0 de las Cards con id que NO sea $newCardId del usuario correspondiente en la Base de Datos
+        $sentencia4 = $bd->prepare("UPDATE paymentMethods SET paymentMethods.isDefault = 0 WHERE paymentMethods.id != ? AND paymentMethods.userId = ?");
+        $resultado4 = $sentencia4->execute([$newCardId, $userId]);
         
         // Si el añadir la nueva card ha ido bien
-        if ($resultado2) {
+        if ($resultado2 && $sentencia4) {
 
-            echo json_encode([
-                "resultado" => $resultado2,
-            ]);
+            echo json_encode($newCardId);
 
         } else {
             echo json_encode([
-                "resultado" => 'ADD_NEW_CARD_COULD_NOT_ADD_NEW_CARD',
+                "resultado" => 'ADD_NEW_CARD_COULD_NOT_ADD_NEW_CARD_OR_SET_THE_REST_TO_NOT_DEFAULT',
             ]);
         }
         
