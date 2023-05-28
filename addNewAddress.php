@@ -31,20 +31,26 @@ try {
     if ( $resultado ) {
         $userId = $resultado->id;
 
-        // Guardar la nueva address en la Base de Datos
+        // Guardar la nueva address en la Base de Datos (como default)
         $sentencia2 = $bd->prepare("INSERT INTO addresses(userId, fullName, address, postalCode, city, countryId, isDefault) VALUES (?, ?, ?, ?, ?, ?, 1)");
         $resultado2 = $sentencia2->execute([$userId, $newAddressAPIPayload->fullName, $newAddressAPIPayload->address, $newAddressAPIPayload->postalCode, $newAddressAPIPayload->city, $newAddressAPIPayload->countryId]);
         
-        // Si el añadir la nueva address ha ido bien
-        if ($resultado2) {
+        // Leer el id de la address insertada (el último id insertado en addresses)
+        $sentencia3 = $bd->query("SELECT LAST_INSERT_ID()");
+        $newAddressId = $sentencia3->fetchColumn();
 
-            echo json_encode([
-                "resultado" => $resultado2,
-            ]);
+        // Poner el isDefault a 0 de las Addresses con id que NO sea $addressIdAPIPayload del usuario correspondiente en la Base de Datos
+        $sentencia4 = $bd->prepare("UPDATE addresses SET addresses.isDefault = 0 WHERE addresses.id != ? AND addresses.userId = ?");
+        $resultado4 = $sentencia4->execute([$newAddressId, $userId]);
+        
+        // Si el añadir la nueva address ha ido bien
+        if ($resultado2 && $sentencia4) {
+
+            echo json_encode($newAddressId);
 
         } else {
             echo json_encode([
-                "resultado" => 'ADD_NEW_ADDRESS_COULD_NOT_ADD_NEW_ADDRESS',
+                "resultado" => 'ADD_NEW_ADDRESS_COULD_NOT_ADD_NEW_ADDRESS_OR_SET_THE_REST_TO_NOT_DEFAULT',
             ]);
         }
         
