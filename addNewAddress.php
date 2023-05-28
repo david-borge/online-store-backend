@@ -39,7 +39,7 @@ try {
         $sentencia3 = $bd->query("SELECT LAST_INSERT_ID()");
         $newAddressId = $sentencia3->fetchColumn();
 
-        // Poner el isDefault a 0 de las Addresses con id que NO sea $addressIdAPIPayload del usuario correspondiente en la Base de Datos
+        // Poner el isDefault a 0 de las Addresses con id que NO sea $newAddressId del usuario correspondiente en la Base de Datos
         $sentencia4 = $bd->prepare("UPDATE addresses SET addresses.isDefault = 0 WHERE addresses.id != ? AND addresses.userId = ?");
         $resultado4 = $sentencia4->execute([$newAddressId, $userId]);
         
