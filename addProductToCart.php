@@ -37,6 +37,7 @@ try {
     // Si el userId existe (el usuario ha iniciado sesión)
     if ( $resultado ) {
         
+        // Leer el id del usuario
         $userId = $resultado->id;
 
         anadirProductAlCarrito($bd, $userId, $productId);
@@ -47,8 +48,8 @@ try {
     else {
 
         // Crear un usuario temporal con token y sin firstName, sin lastName, sin email, sin password, sin signUpFullDate y sin lastLoginFullDate
-        $sentencia3 = $bd->prepare("INSERT INTO users(firstName, lastName, email, password, signUpFullDate, lastLoginFullDate, token) VALUES ('', '', '', '', '', '', ?)");
-        $resultado3 = $sentencia3->execute([$authTokenAPIPayload]);
+        $sentencia3 = $bd->prepare("INSERT INTO users(firstName, lastName, email, password, signUpFullDate, lastLoginFullDate, token) VALUES ('', '', ?, '', '', '', ?)"); // Meto temporalmente el token como el email para que no me de el error "SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '' for key 'users.email'"
+        $resultado3 = $sentencia3->execute([$authTokenAPIPayload, $authTokenAPIPayload]);
         echo json_encode($resultado3);
 
         // Sacar el ID del usuario temporal creado
