@@ -19,28 +19,39 @@ $bd = include_once "bd.php";
 try {
 
 
-    // - API Payload (email introducido en el formulario de Log In)
-    $emailFromLogInForm = $jsonAPIPayload->email;
+    // - API Payload (authToken cookie value)
+    $authTokenAPIPayload = $jsonAPIPayload->authToken;
 
-    // Recuperar: direcciones del usuario con email $emailFromLogInForm
-    $sentencia = $bd->prepare("SELECT paymentMethods.id, paymentMethods.type, paymentMethods.cardBankName, paymentMethods.cardPersonFullName, RIGHT(paymentMethods.cardNumber, 4) AS cardLastFourNumbers, paymentMethods.cardExpirationMonth, paymentMethods.cardExpirationYear, paymentMethods.cardType, paymentMethods.isDefault FROM paymentMethods, users WHERE users.email = ?");
-    $sentencia->execute([$emailFromLogInForm]);
-    $resultado = $sentencia->fetchAll(PDO::FETCH_OBJ);
+    // Sacar de la Base de Datos el userId correspondiente al authToken
+    $sentencia = $bd->prepare("SELECT id FROM users WHERE token = ?");
+    $sentencia->execute([$authTokenAPIPayload]);
+    $resultado = $sentencia->fetchObject();
 
-    // Si recuperar los datos ha ido bien
+    // Si recuperar el userId ha ido bien
     if ( $resultado ) {
+        $userId = $resultado->id;
 
-        echo json_encode([
-            "resultado" => true,
-            "paymentMethods" => $resultado,
-        ]);
+        // Recuperar: direcciones del usuario con email $emailFromLogInForm
+        $sentencia = $bd->prepare("SELECT paymentMethods.id, paymentMethods.type, paymentMethods.cardBankName, paymentMethods.cardPersonFullName, RIGHT(paymentMethods.cardNumber, 4) AS cardLastFourNumbers, paymentMethods.cardExpirationMonth, paymentMethods.cardExpirationYear, paymentMethods.cardType, paymentMethods.isDefault FROM paymentMethods WHERE paymentMethods.userId = ?");
+        $sentencia->execute([$userId]);
+        $resultado = $sentencia->fetchAll(PDO::FETCH_OBJ);
 
-    } else {
+        // Si recuperar los datos ha ido bien
+        if ( $resultado ) {
 
-        echo json_encode([
-            "resultado" => 'GET_PAYMENT_METHODS_DATA_ERROR_GET_PAYMENT_METHODS_FAILED',
-        ]);
+            echo json_encode([
+                "resultado" => true,
+                "paymentMethods" => $resultado,
+            ]);
 
+        } else {
+
+            echo json_encode([
+                "resultado" => 'GET_PAYMENT_METHODS_DATA_ERROR_GET_PAYMENT_METHODS_FAILED',
+            ]);
+
+        }
+    
     }
 
 } catch (Exception $e) {
