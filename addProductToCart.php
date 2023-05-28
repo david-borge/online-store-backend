@@ -32,63 +32,30 @@ try {
     $sentencia2->execute([$productSlugAPIPayload]);
     $resultado2 = $sentencia2->fetchObject();
 
-    // Si recuperar el userId ha ido bien
-    if ( $resultado && $resultado2 ) {
+    $productId = $resultado2->id;
+
+    // Si el userId existe (el usuario ha iniciado sesión)
+    if ( $resultado ) {
         
-        $userId    = $resultado->id;
-        $productId = $resultado2->id;
+        $userId = $resultado->id;
 
-        // Comprobar si el usuario con $userId ya ha añadido el producto con $productId al carrito
-        $sentencia3 = $bd->prepare("SELECT cart.productQuantity FROM cart WHERE cart.userId = ? AND cart.productId = ?");
-        $resultado3 = $sentencia3->execute([$userId, $productId]);
-        $resultado3 = $sentencia3->fetchObject();
+        anadirProductAlCarrito($bd, $userId, $productId);
 
-        // Si el usuario NO había añadido el producto al carrito, añadir el producto al carrito
-        if (!$resultado3) { // $resultado3 no existe (es null)
-            
-            $sentencia4 = $bd->prepare("INSERT INTO cart(userId, productId, productQuantity) VALUES (?, ?, 1)"); // Por ahora, cuando añado un producto al carrito siempre es una unidad
-            $resultado4 = $sentencia4->execute([$userId, $productId]);
+    }
 
-            // Si el añadir el producto al carrito ha ido bien
-            if ($resultado4) {
+    // Si el userId NO existe (el usuario NO ha iniciado sesión)
+    else {
 
-                echo json_encode($resultado4);
+        // Crear un usuario temporal con token y sin firstName, sin lastName, sin email, sin password, sin signUpFullDate y sin lastLoginFullDate
+        $sentencia3 = $bd->prepare("INSERT INTO users(firstName, lastName, email, password, signUpFullDate, lastLoginFullDate, token) VALUES ('', '', '', '', '', '', ?)");
+        $resultado3 = $sentencia3->execute([$authTokenAPIPayload]);
+        echo json_encode($resultado3);
 
-            } else {
+        // Sacar el ID del usuario temporal creado
+        $userId = $bd->query("SELECT LAST_INSERT_ID()");
 
-                echo json_encode([
-                    "resultado" => 'ADD_PRODUCT_TO_CART_ERROR_COULD_NOT_ADD_PRODUCT_TO_CART',
-                ]);
-                
-            }
-            
-        }
+        anadirProductAlCarrito($bd, $userId, $productId);
         
-        // Si el usuario SÍ había añadido el producto al carrito, aumentar su cantidad en 1
-        else {
-
-            $sentencia4 = $bd->prepare("UPDATE cart SET productQuantity = (? + 1) WHERE cart.userId = ? AND cart.productId = ?");
-            $resultado4 = $sentencia4->execute([$resultado3->productQuantity, $userId, $productId]);
-            
-            // Si el aumentar la cantidad del producto en 1 ha ido bien
-            if ($resultado4) {
-
-                echo json_encode($resultado4);
-
-            } else {
-
-                echo json_encode([
-                    "resultado" => 'ADD_PRODUCT_TO_CART_ERROR_COULD_NOT_UPDATE_PRODUCT_QUANTITY',
-                ]);
-                
-            }
-
-        }
-        
-    } else {
-        echo json_encode([
-            "resultado" => 'ADD_PRODUCT_TO_CART_ERROR_COULD_NOT_GET_USER_ID',
-        ]);
     }
 
 } catch (Exception $e) {
@@ -99,5 +66,58 @@ try {
     echo json_encode([
         "resultado" => $e->getMessage(), // Ejemplo: "SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'hewemim@mailinator.com' for key 'users.email'"
     ]);
+
+}
+
+
+
+function anadirProductAlCarrito($bd, $userId, $productId) {
+    
+    // Comprobar si el usuario con $userId ya ha añadido el producto con $productId al carrito
+    $sentencia3 = $bd->prepare("SELECT cart.productQuantity FROM cart WHERE cart.userId = ? AND cart.productId = ?");
+    $resultado3 = $sentencia3->execute([$userId, $productId]);
+    $resultado3 = $sentencia3->fetchObject();
+
+    // Si el usuario NO había añadido el producto al carrito, añadir el producto al carrito
+    if (!$resultado3) { // $resultado3 no existe (es null)
+        
+        $sentencia4 = $bd->prepare("INSERT INTO cart(userId, productId, productQuantity) VALUES (?, ?, 1)"); // Por ahora, cuando añado un producto al carrito siempre es una unidad
+        $resultado4 = $sentencia4->execute([$userId, $productId]);
+
+        // Si el añadir el producto al carrito ha ido bien
+        if ($resultado4) {
+
+            echo json_encode($resultado4);
+
+        } else {
+
+            echo json_encode([
+                "resultado" => 'ADD_PRODUCT_TO_CART_ERROR_COULD_NOT_ADD_PRODUCT_TO_CART',
+            ]);
+            
+        }
+        
+    }
+    
+    // Si el usuario SÍ había añadido el producto al carrito, aumentar su cantidad en 1
+    else {
+
+        $sentencia4 = $bd->prepare("UPDATE cart SET productQuantity = (? + 1) WHERE cart.userId = ? AND cart.productId = ?");
+        $resultado4 = $sentencia4->execute([$resultado3->productQuantity, $userId, $productId]);
+        
+        // Si el aumentar la cantidad del producto en 1 ha ido bien
+        if ($resultado4) {
+
+            echo json_encode($resultado4);
+
+        } else {
+
+            echo json_encode([
+                "resultado" => 'ADD_PRODUCT_TO_CART_ERROR_COULD_NOT_UPDATE_PRODUCT_QUANTITY',
+            ]);
+            
+        }
+
+    }
 
 }
