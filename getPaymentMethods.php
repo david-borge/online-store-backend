@@ -36,7 +36,7 @@ try {
         $sentencia->execute([$userId]);
         $resultado = $sentencia->fetchAll(PDO::FETCH_OBJ);
 
-        // Si recuperar los datos ha ido bien
+        // Si se ha encontrado algún payment method
         if ( $resultado ) {
 
             echo json_encode([
@@ -44,10 +44,12 @@ try {
                 "paymentMethods" => $resultado,
             ]);
 
+        // Si NO se ha encontrado algún pedido, devolver un array vacío (porque el valor por defecto de $resultado es null)
         } else {
 
             echo json_encode([
-                "resultado" => 'GET_PAYMENT_METHODS_DATA_ERROR_GET_PAYMENT_METHODS_FAILED',
+                "resultado" => true,
+                "paymentMethods" => [],
             ]);
 
         }
