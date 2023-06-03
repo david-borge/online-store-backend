@@ -32,7 +32,7 @@ try {
         $userId = $resultado->id;
 
         // Recuperar: direcciones del usuario con email $emailFromLogInForm
-        $sentencia = $bd->prepare("SELECT paymentMethods.id, paymentMethods.type, paymentMethods.cardBankName, paymentMethods.cardPersonFullName, RIGHT(paymentMethods.cardNumber, 4) AS cardLastFourNumbers, paymentMethods.cardExpirationMonth, paymentMethods.cardExpirationYear, paymentMethods.cardType, paymentMethods.isDefault FROM paymentMethods WHERE paymentMethods.userId = ?");
+        $sentencia = $bd->prepare("SELECT paymentMethods.id, paymentMethods.type, paymentMethods.cardBankName, paymentMethods.cardPersonFullName, RIGHT(paymentMethods.cardNumber, 4) AS cardLastFourNumbers, paymentMethods.cardExpirationMonth, paymentMethods.cardExpirationYear, paymentMethods.cardType, paymentMethods.isDefault FROM paymentMethods WHERE paymentMethods.userId = ? ORDER BY paymentMethods.id DESC");
         $sentencia->execute([$userId]);
         $resultado = $sentencia->fetchAll(PDO::FETCH_OBJ);
 
