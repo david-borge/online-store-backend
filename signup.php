@@ -18,10 +18,33 @@ $bd = include_once "bd.php";
 
 try {
 
-    $sentencia = $bd->prepare("INSERT INTO users(firstName, lastName, email, password, signUpFullDate, lastLoginFullDate, token) VALUES (?,?,?,?,?,?,?)");
-    $resultado = $sentencia->execute([$jsonUser->firstName, $jsonUser->lastName, $jsonUser->email, $jsonUser->password, $jsonUser->signUpFullDate, $jsonUser->lastLoginFullDate, $jsonUser->token]);
+    // - API Payload
+    $authTokenAPIPayload = $jsonUser->token;
+    
+    // - Comprobar si el authToken ya existe, es decir, si hay un usuario temporal que solo tiene token porque el usuario ha añadido productos al carrito sin iniciar sesión
+    $sentencia = $bd->prepare("SELECT token FROM users WHERE token = ?");
+    $sentencia->execute([$authTokenAPIPayload]);
+    $resultado = $sentencia->fetchObject();
+    
+    // - Si el token NO existe en la Base de datos (el usuario es totalmente nuevo), crearlo
+    if ( $resultado->token == '' ) {
+        
+        // - Insertar el usuario en la Base de datos
+        $sentencia2 = $bd->prepare("INSERT INTO users(firstName, lastName, email, password, signUpFullDate, lastLoginFullDate, token) VALUES (?,?,?,?,?,?,?)");
+        $resultado2 = $sentencia2->execute([$jsonUser->firstName, $jsonUser->lastName, $jsonUser->email, $jsonUser->password, $jsonUser->signUpFullDate, $jsonUser->lastLoginFullDate, $authTokenAPIPayload]);
+
+    }
+    
+    // - Si el token YA existe en la Base de datos (hay un usuario temporal), actualizarlo manteniendo el mismo token, pero añadiendo el resto de datos (nombre, apellidos, email, contraseña y fechas)
+    else {
+
+        $sentencia2 = $bd->prepare("UPDATE users SET firstName = ?, lastName = ?, email = ?, password = ?, signUpFullDate = ?, lastLoginFullDate = ? WHERE token = ?");
+        $resultado2 = $sentencia2->execute([$jsonUser->firstName, $jsonUser->lastName, $jsonUser->email, $jsonUser->password, $jsonUser->signUpFullDate, $jsonUser->lastLoginFullDate, $authTokenAPIPayload]);
+        
+    }
+
     echo json_encode([
-        "resultado" => $resultado,
+        "resultado" => $resultado2,
     ]);
 
 } catch (Exception $e) {
