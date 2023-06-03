@@ -32,7 +32,7 @@ try {
         $userId = $resultado->id;
         
         // Recuperar: direcciones del usuario $userId
-        $sentencia2 = $bd->prepare("SELECT addresses.id, addresses.fullName, addresses.address, addresses.postalCode, addresses.city, countries.name AS country, addresses.isDefault FROM addresses, countries WHERE addresses.userId = ? AND countries.id = addresses.countryId");
+        $sentencia2 = $bd->prepare("SELECT addresses.id, addresses.fullName, addresses.address, addresses.postalCode, addresses.city, countries.name AS country, addresses.isDefault FROM addresses, countries WHERE addresses.userId = ? AND countries.id = addresses.countryId ORDER BY addresses.id DESC");
         $sentencia2->execute([$userId]);
         $resultado2 = $sentencia2->fetchAll(PDO::FETCH_OBJ);
 
