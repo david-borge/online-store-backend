@@ -50,7 +50,7 @@ try {
         // Crear un usuario temporal con token y sin firstName, sin lastName, sin email, sin password, sin signUpFullDate y sin lastLoginFullDate
         $sentencia3 = $bd->prepare("INSERT INTO users(firstName, lastName, email, password, signUpFullDate, lastLoginFullDate, token) VALUES ('', '', ?, '', '', '', ?)"); // Meto temporalmente el token como el email para que no me de el error "SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '' for key 'users.email'"
         $resultado3 = $sentencia3->execute([$authTokenAPIPayload, $authTokenAPIPayload]);
-        echo json_encode($resultado3);
+        // echo json_encode($resultado3);
 
         // Sacar el ID del usuario temporal creado
         $userId = $bd->query("SELECT LAST_INSERT_ID()");
