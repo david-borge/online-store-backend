@@ -9,6 +9,11 @@ if ( true )
 }
 
 $bd = include_once "bd.php";
-$sentencia = $bd->query("SELECT * FROM products");
+
+// En esta sentencia hago una unión: (productos que tienen reseñas) UNION (productos que no tienen reseñas)
+$sentencia = $bd->query("(SELECT products.id, products.slug, products.name, products.manufacturer, products.price, products.descripcion, products.category, products.imageThumbnail, products.imageFull, products.imageWidth, products.imageHeight, ( ((SUM(reviews.ratingNumber) / COUNT(reviews.ratingNumber)) * 5) / 100 ) AS ratingNumber, products.cardAndHeaderBackgroundColor, products.featured, products.deal FROM products, reviews WHERE products.id = reviews.productId GROUP BY products.id) UNION (SELECT products.id, products.slug, products.name, products.manufacturer, products.price, products.descripcion, products.category, products.imageThumbnail, products.imageFull, products.imageWidth, products.imageHeight, NULL AS ratingNumber, products.cardAndHeaderBackgroundColor, products.featured, products.deal FROM products, reviews WHERE products.id NOT IN (SELECT reviews.productId FROM reviews) GROUP BY products.id)");
+
+// $sentencia = $bd->query("SELECT * FROM products");
+
 $products = $sentencia->fetchAll(PDO::FETCH_OBJ);
 echo json_encode($products);
